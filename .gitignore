@@ -1,0 +1,10 @@
+Makefile
+*.o
+*.a
+*.d
+*.user
+*.moc
+moc_*.cpp
+ui_*.h
+qrc_*.cpp
+SoCConf

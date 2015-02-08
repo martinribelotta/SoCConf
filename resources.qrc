@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/">
+        <file>images/qfp-body.svg</file>
+        <file>images/qfp-pin.svg</file>
+    </qresource>
+</RCC>
