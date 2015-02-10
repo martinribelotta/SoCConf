@@ -14,7 +14,7 @@ DialogPinConfig::DialogPinConfig(int n, const PinInfo &info, QWidget *parent) :
     QSortFilterProxyModel *p = new QSortFilterProxyModel(this);
     QStringListModel *m = new QStringListModel(info.functions);
     p->setSourceModel(m);
-    p->setFilterRegExp(QRegExp("[^N][^o][^n][^e]"));
+    p->setFilterRegExp(QRegExp("^((?!None).)*$"));
     ui->functionListView->setModel(p);
     ui->functionListView->setCurrentIndex(p->mapFromSource(m->index(n, 0)));
 }

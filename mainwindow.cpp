@@ -37,8 +37,8 @@ void MainWindow::on_actionNew_triggered()
                             QDir::currentPath(),
                             tr("Chip files (*.chip);;All files (*)"));
     SoCInfo info = SoCInfo::fromFile(path); //"/home/martin/Proyectos/git/martinribelotta/SoCConf/test.chip"));
-    if (info.pins.isEmpty())
-        QMessageBox::critical(this, tr("Open error"), tr("Error reading %1").arg(path));
+    if (info.isError())
+        QMessageBox::critical(this, tr("Open error"), info.errorMessage());
     else {
         SocBodyItem *body = new SocBodyItem(info, QSize(400,400));
         scene->addItem(body);

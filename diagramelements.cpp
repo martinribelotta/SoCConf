@@ -13,6 +13,8 @@
 static const QString createTooltop(int pin, const QStringList& funcList) {
     QString s;
     s = QString("Pin %1\n").arg(pin);
+    if (funcList.count() == 1)
+        return QString("Pin %1: %2").arg(pin).arg(funcList.front());
     int i = 0;
     foreach(QString f, funcList) {
         if (f != "None")
@@ -25,8 +27,6 @@ static const QString createTooltop(int pin, const QStringList& funcList) {
 SocBodyItem::SocBodyItem(const SoCInfo &info, const QSizeF &z, QGraphicsItem *parentItem) :
     QGraphicsSvgItem(":/images/qfp-body.svg", parentItem)
 {
-    setAcceptedMouseButtons(Qt::LeftButton);
-
     setTransform(QTransform().scale(z.width(), z.height()), false);
 
     QGraphicsRectItem *border = new QGraphicsRectItem(QRectF(QPointF(), QSizeF(1.2, 1.2)), this);
@@ -82,6 +82,8 @@ SMDPinItem::SMDPinItem(const PinInfo& info, int n, Side_t side, QGraphicsItem *p
     QGraphicsSvgItem(":/images/qfp-pin.svg", parent), pinSide(side), pinInfo(info), currentFunction(0)
 {
     setAcceptedMouseButtons(Qt::LeftButton);
+    setGraphicsEffect(color = new QGraphicsColorizeEffect(this));
+    color->setColor(QColor());
 
     setToolTip(createTooltop(n, info.functions));
     QGraphicsTextItem *label = new QGraphicsTextItem(QString("%1").arg(n), this);
@@ -112,6 +114,8 @@ SMDPinItem::SMDPinItem(const PinInfo& info, int n, Side_t side, QGraphicsItem *p
 
     functionLabel = 0l;
     refreshFunctionLabel();
+    if (pinInfo.functions.count() > 1)
+        color->setEnabled(false);
 }
 
 const QString SMDPinItem::currentFunctionLabel() const
@@ -119,16 +123,14 @@ const QString SMDPinItem::currentFunctionLabel() const
     return pinInfo.functions.at(currentFunction);
 }
 
-void SMDPinItem::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event)
+void SMDPinItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
 {
-    if (pinInfo.functions.count() > 1) {
-        DialogPinConfig d(currentFunction, pinInfo);
-        d.move(event->buttonDownScreenPos(Qt::LeftButton));
-        if (d.exec() == QDialog::Accepted) {
-            currentFunction = d.selectedElement();
-            refreshFunctionLabel();
-        }
-    }
+    showPinMenu(event->buttonDownScreenPos(Qt::LeftButton));
+}
+
+void SMDPinItem::contextMenuEvent(QGraphicsSceneContextMenuEvent *event)
+{
+    showPinMenu(event->screenPos());
 }
 
 void SMDPinItem::refreshFunctionLabel()
@@ -152,4 +154,22 @@ void SMDPinItem::refreshFunctionLabel()
 
     label->setTransform(t);
     functionLabel = label;
+
+    if (pinInfo.functions.count() == 1)
+        color->setColor(Qt::darkYellow);
+    else
+        color->setColor(Qt::darkGreen);
+    color->setEnabled(true);
+}
+
+void SMDPinItem::showPinMenu(const QPoint &screenPos)
+{
+    if (pinInfo.functions.count() > 1) {
+        DialogPinConfig d(currentFunction, pinInfo);
+        d.move(screenPos);
+        if (d.exec() == QDialog::Accepted) {
+            currentFunction = d.selectedElement();
+            refreshFunctionLabel();
+        }
+    }
 }
