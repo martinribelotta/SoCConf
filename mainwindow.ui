@@ -45,13 +45,13 @@
     <bool>false</bool>
    </attribute>
    <addaction name="actionNew"/>
+   <addaction name="separator"/>
    <addaction name="actionExit"/>
   </widget>
   <action name="actionExit">
    <property name="icon">
-    <iconset theme="application-exit">
-     <normaloff/>
-    </iconset>
+    <iconset theme="application-exit" resource="resources.qrc">
+     <normaloff>:/images/application-exit.png</normaloff>:/images/application-exit.png</iconset>
    </property>
    <property name="text">
     <string>Exit</string>
@@ -62,15 +62,16 @@
   </action>
   <action name="actionNew">
    <property name="icon">
-    <iconset theme="document-new">
-     <normaloff/>
-    </iconset>
+    <iconset theme="document-new" resource="resources.qrc">
+     <normaloff>:/images/document-new.png</normaloff>:/images/document-new.png</iconset>
    </property>
    <property name="text">
     <string>New</string>
    </property>
   </action>
  </widget>
- <resources/>
+ <resources>
+  <include location="resources.qrc"/>
+ </resources>
  <connections/>
 </ui>

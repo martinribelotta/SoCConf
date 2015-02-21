@@ -24,6 +24,21 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+bool MainWindow::newFrom(const QString &file)
+{
+    SoCInfo *info = new SoCInfo();
+    if (!info->load(file)) {
+        QMessageBox::critical(this, tr("Open error"), info->errorMessage());
+        delete info;
+        return false;
+    } else {
+        scene->clear();
+        SocBodyItem *body = new SocBodyItem(info, QSize(400,400));
+        scene->addItem(body);
+        return true;
+    }
+}
+
 void MainWindow::on_actionExit_triggered()
 {
     close();
@@ -31,16 +46,9 @@ void MainWindow::on_actionExit_triggered()
 
 void MainWindow::on_actionNew_triggered()
 {
-    QString path = QFileDialog::
+    newFrom(QFileDialog::
             getOpenFileName(this,
                             tr("Open Chip"),
                             QDir::currentPath(),
-                            tr("Chip files (*.chip);;All files (*)"));
-    SoCInfo info = SoCInfo::fromFile(path); //"/home/martin/Proyectos/git/martinribelotta/SoCConf/test.chip"));
-    if (info.isError())
-        QMessageBox::critical(this, tr("Open error"), info.errorMessage());
-    else {
-        SocBodyItem *body = new SocBodyItem(info, QSize(400,400));
-        scene->addItem(body);
-    }
+                            tr("Chip files (*.chip);;All files (*)")));
 }

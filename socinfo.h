@@ -2,34 +2,39 @@
 #define SOCINFO_H
 
 #include <QScriptValue>
-#include <QStringList>
-#include <QHash>
-#include <QList>
-#include <QSet>
-
-class PinInfo {
-public:
-    QStringList functions;
-
-    PinInfo() { }
-    PinInfo(const QStringList& func) : functions(func) {}
-
-    bool isValid() const { return !functions.isEmpty(); }
-};
+#include <QScriptEngine>
 
 class SoCInfo {
-public:
-    QString name;
-    QHash<int, PinInfo> pins;
-    QScriptValue generator;
+    QString m_errorMsg;
+    mutable QScriptEngine sc;
 
+public:
     SoCInfo() { }
 
-    bool isError() const { return !name.isEmpty() && pins.isEmpty(); }
-    QString errorMessage() const { return name; }
+    QScriptValue obj() const { return sc.globalObject(); }
 
-    static SoCInfo fromFile(const QString& path);
-    static SoCInfo error(const QString& message);
+    QString errorMessage() const { return m_errorMsg; }
+
+    QString name() const { return obj().property("name").toString(); }
+
+    QScriptValue pins() const { return obj().property("pins"); }
+
+    QScriptValue properties() const { return obj().property("properties"); }
+
+    QString callFunction(const QString& name, QScriptValue pin) const {
+        QScriptValue pinText = obj().property(name);
+        QScriptValueList args;
+        args << pin;
+        QString res = pinText.call(QScriptValue(), args).toString();
+        if (sc.hasUncaughtException())
+            return QString("excepto on %1").arg(sc.uncaughtExceptionLineNumber());
+        return res;
+    }
+
+    bool load(const QString& path);
+
+private:
+    bool error(const QString& message);
 };
 
 

@@ -19,6 +19,9 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
+public slots:
+    bool newFrom(const QString& file);
+
 private slots:
     void on_actionExit_triggered();
 

@@ -2,24 +2,27 @@
 #define DIALOGPINCONFIG_H
 
 #include <QDialog>
+#include <QScriptValue>
+#include <QVariant>
 
-namespace Ui {
-class DialogPinConfig;
-}
-
-class PinInfo;
+class SoCInfo;
+class EntryView;
 
 class DialogPinConfig : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit DialogPinConfig(int n, const PinInfo &info, QWidget *parent = 0);
+    explicit DialogPinConfig(QScriptValue pinInfo, const SoCInfo &socInfo, QWidget *parent = 0);
     ~DialogPinConfig();
 
-    int selectedElement() const;
+    bool isConfigurable() const { return property("configurable").toBool(); }
+
+    QScriptValue idx() const;
+
 private:
-    Ui::DialogPinConfig *ui;
+    QScriptValue pIdx;
+    QList<EntryView*> views;
 };
 
 #endif // DIALOGPINCONFIG_H

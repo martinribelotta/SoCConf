@@ -12,7 +12,7 @@ class SMDPinItem :  public QGraphicsSvgItem {
 public:
     enum Side_t { SideLeft, SideBottom, SideRight, SideTop };
 
-    SMDPinItem(const PinInfo &info, int n, Side_t side, QGraphicsItem *parent);
+    SMDPinItem(const SoCInfo& sInfo, QScriptValue pInfo, Side_t side, QGraphicsItem *parent);
 
     const QString currentFunctionLabel() const;
 
@@ -22,18 +22,22 @@ protected:
 
 private:
     const Side_t pinSide;
-    const PinInfo pinInfo;
-    int currentFunction;
+    const SoCInfo& socInfo;
+    QScriptValue pinInfo;
     QGraphicsTextItem *functionLabel;
     QGraphicsColorizeEffect *color;
 
     void refreshFunctionLabel();
-    void showPinMenu(const QPoint &screenPos);
+    void showPinMenu(const QPointF &pos);
 };
 
 class SocBodyItem : public QGraphicsSvgItem {
 public:
-    SocBodyItem(const SoCInfo& info, const QSizeF& z, QGraphicsItem *parentItem = 0l);
+    SocBodyItem(SoCInfo *inf, const QSizeF& z, QGraphicsItem *parentItem = 0l);
+    virtual ~SocBodyItem() { delete info; }
+
+private:
+    const SoCInfo *info;
 };
 
 #endif // DIAGRAMELEMENTS_H

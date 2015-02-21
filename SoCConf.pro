@@ -29,11 +29,11 @@ HEADERS  += \
     socinfo.h
 
 FORMS    += \
-    mainwindow.ui \
-    dialogpinconfig.ui
+    mainwindow.ui
 
 RESOURCES += \
     resources.qrc
 
 DISTFILES += \
-    test.chip
+    examples/lpc4337fbd144.chip \
+    examples/rz-a1l.chip

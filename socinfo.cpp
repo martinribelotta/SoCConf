@@ -5,47 +5,43 @@
 #include <QScriptValueIterator>
 #include <QObject>
 
+#include <QtDebug>
+
 #define _(s) QObject::tr(s)
 
-SoCInfo SoCInfo::fromFile(const QString &path)
+bool SoCInfo::load(const QString &path)
 {
-    QScriptEngine sc;
     QFile f(path);
+    m_errorMsg = QString();
+
     if (!f.open(QFile::ReadOnly))
         return SoCInfo::error(_("File error: %1").arg(f.errorString()));
-    QScriptValue v = sc.evaluate(f.readAll());
-    if (!v.isObject())
-        return SoCInfo::error(_("Format error: Base value is not an object."));
-    QScriptValue functions = v.property("functions");
-    if (!functions.isObject())
-        return SoCInfo::error(_("Format error: File not contain function list or is not an object."));
 
-    SoCInfo info;
-    info.name = v.property("name").toString();
-    if (info.name.isEmpty())
-        return SoCInfo::error(_("Format error: Object name missing."));
-    info.generator = v.property("generator");
-    if (!info.generator.isFunction())
-        return SoCInfo::error(_("Format error: File not contain generator or generator is not a function."));
-    QScriptValueIterator it(functions);
-    int entry = 0;
+    sc.evaluate(f.readAll());
+
+    if (sc.hasUncaughtException())
+        return SoCInfo::error(QString("Exception at %2: %1")
+                              .arg(sc.uncaughtException().toString())
+                              .arg(sc.uncaughtExceptionLineNumber()));
+
+    QScriptValueIterator it(pins());
+    int max = 0;
     while(it.hasNext()) {
         it.next();
         bool ok = false;
-        int pinNum = it.name().toInt(&ok);
-        if (!ok)
-            return SoCInfo::error(_("Format error: Entry %1 malformed, pin is not a number.").arg(entry));
-        if (!it.value().isArray())
-            return SoCInfo::error(_("Format error: Entry %1 malformed, missing pin array.").arg(entry));
-        info.pins.insert(pinNum, PinInfo(it.value().toVariant().toStringList()));
-        entry++;
+        int v = it.name().toInt(&ok);
+        if (ok && (max < v))
+            max = v;
     }
-    return info;
+    if (max == 0)
+        return SoCInfo::error(_("No pins"));
+    pins().setProperty("length", max);
+
+    return true;
 }
 
-SoCInfo SoCInfo::error(const QString &message)
+bool SoCInfo::error(const QString &message)
 {
-    SoCInfo e;
-    e.name = message;
-    return e;
+    m_errorMsg = message;
+    return false;
 }

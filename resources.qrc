@@ -2,5 +2,7 @@
     <qresource prefix="/">
         <file>images/qfp-body.svg</file>
         <file>images/qfp-pin.svg</file>
+        <file>images/document-new.png</file>
+        <file>images/application-exit.png</file>
     </qresource>
 </RCC>

@@ -11,6 +11,7 @@ SceneView::SceneView(QWidget *parent) : QGraphicsView(parent)
 {
     setRenderHint(QPainter::Antialiasing, true);
     setRenderHint(QPainter::TextAntialiasing, true);
+    setDragMode(ScrollHandDrag);
 }
 
 SceneView::~SceneView()

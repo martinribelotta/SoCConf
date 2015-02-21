@@ -4,39 +4,27 @@
 
 #include <QtDebug>
 
+#include <QGraphicsProxyWidget>
 #include <QSvgRenderer>
+#include <QGraphicsScene>
 #include <QGraphicsEffect>
 #include <QGraphicsSceneEvent>
 #include <QRegion>
 #include <QPen>
 
-static const QString createTooltop(int pin, const QStringList& funcList) {
-    QString s;
-    s = QString("Pin %1\n").arg(pin);
-    if (funcList.count() == 1)
-        return QString("Pin %1: %2").arg(pin).arg(funcList.front());
-    int i = 0;
-    foreach(QString f, funcList) {
-        if (f != "None")
-            s+= QString("     %2: %1\n").arg(f).arg(i);
-        i++;
-    }
-    return s;
-}
-
-SocBodyItem::SocBodyItem(const SoCInfo &info, const QSizeF &z, QGraphicsItem *parentItem) :
-    QGraphicsSvgItem(":/images/qfp-body.svg", parentItem)
+SocBodyItem::SocBodyItem(SoCInfo *inf, const QSizeF &z, QGraphicsItem *parentItem) :
+    QGraphicsSvgItem(":/images/qfp-body.svg", parentItem), info(inf)
 {
     setTransform(QTransform().scale(z.width(), z.height()), false);
 
-    QGraphicsRectItem *border = new QGraphicsRectItem(QRectF(QPointF(), QSizeF(1.2, 1.2)), this);
+    QGraphicsRectItem *border = new QGraphicsRectItem(QRectF(QPointF(), QSizeF(1.5, 1.5)), this);
     border->setPen(Qt::NoPen);
     QRectF br = border->boundingRect();
     QRectF my = boundingRect();
     br.moveCenter(my.center());
     border->setPos(br.topLeft());
 
-    QGraphicsTextItem *label = new QGraphicsTextItem(info.name, this);
+    QGraphicsTextItem *label = new QGraphicsTextItem(info->name(), this);
     label->setDefaultTextColor(Qt::lightGray);
     QRectF rl = label->boundingRegion(label->transform()).boundingRect();
     float unary_x = my.width()/rl.width();
@@ -45,7 +33,8 @@ SocBodyItem::SocBodyItem(const SoCInfo &info, const QSizeF &z, QGraphicsItem *pa
     label->setScale(unary);
     label->setPos(my.width()/2 - rl.width()/2*unary, my.height()/2 - rl.height()/2*unary);
 
-    const int pincount = info.pins.count();
+    QScriptValue pins = info->pins();
+    const int pincount = pins.property("length").toInteger();
     const int sidecount = pincount/4;
     float scale = boundingRect().width()/(sidecount+1.8)/1.5;
 
@@ -62,8 +51,10 @@ SocBodyItem::SocBodyItem(const SoCInfo &info, const QSizeF &z, QGraphicsItem *pa
         QGraphicsItemGroup *group = new QGraphicsItemGroup(this);
         group->setHandlesChildEvents(false);
         for(int n=1; n<=sidecount; n++) {
-            PinInfo pinInfo(info.pins.value(pinNum));
-            SMDPinItem *pin = new SMDPinItem(pinInfo, pinNum, SMDPinItem::Side_t(sideNum), this);
+            //Pininfo->pinInfo(info->pins.value(pinNum));
+            QScriptValue pinInfo = info->pins().property(QString("%1").arg(pinNum));
+            pinInfo.setProperty("number", QScriptValue(pinNum));
+            SMDPinItem *pin = new SMDPinItem(*info, pinInfo, SMDPinItem::Side_t(sideNum), this);
             pin->setAcceptedMouseButtons(Qt::LeftButton);
             pin->setScale(scale);
             float w = pin->boundingRect().width()*scale;
@@ -78,15 +69,16 @@ SocBodyItem::SocBodyItem(const SoCInfo &info, const QSizeF &z, QGraphicsItem *pa
     }
 }
 
-SMDPinItem::SMDPinItem(const PinInfo& info, int n, Side_t side, QGraphicsItem *parent) :
-    QGraphicsSvgItem(":/images/qfp-pin.svg", parent), pinSide(side), pinInfo(info), currentFunction(0)
+SMDPinItem::SMDPinItem(const SoCInfo& sInfo, QScriptValue pInfo, Side_t side, QGraphicsItem *parent) :
+    QGraphicsSvgItem(":/images/qfp-pin.svg", parent), pinSide(side), socInfo(sInfo), pinInfo(pInfo)
 {
+    setCursor(QCursor(Qt::ArrowCursor));
     setAcceptedMouseButtons(Qt::LeftButton);
     setGraphicsEffect(color = new QGraphicsColorizeEffect(this));
     color->setColor(QColor());
 
-    setToolTip(createTooltop(n, info.functions));
-    QGraphicsTextItem *label = new QGraphicsTextItem(QString("%1").arg(n), this);
+    int pinNum = pinInfo.property("number").toInteger();
+    QGraphicsTextItem *label = new QGraphicsTextItem(QString("%1").arg(pinNum), this);
     QRectF rl = label->boundingRegion(label->transform()).boundingRect();
     QRectF my = boundingRect();
     float unary_x = my.width()/rl.width();
@@ -113,24 +105,23 @@ SMDPinItem::SMDPinItem(const PinInfo& info, int n, Side_t side, QGraphicsItem *p
     label->setPos(rl.topLeft());
 
     functionLabel = 0l;
+
     refreshFunctionLabel();
-    if (pinInfo.functions.count() > 1)
-        color->setEnabled(false);
 }
 
 const QString SMDPinItem::currentFunctionLabel() const
 {
-    return pinInfo.functions.at(currentFunction);
+    return socInfo.callFunction("pinText", pinInfo);
 }
 
 void SMDPinItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
 {
-    showPinMenu(event->buttonDownScreenPos(Qt::LeftButton));
+    showPinMenu(event->scenePos());
 }
 
 void SMDPinItem::contextMenuEvent(QGraphicsSceneContextMenuEvent *event)
 {
-    showPinMenu(event->screenPos());
+    showPinMenu(event->scenePos());
 }
 
 void SMDPinItem::refreshFunctionLabel()
@@ -144,32 +135,41 @@ void SMDPinItem::refreshFunctionLabel()
     float unary_y = my.height()/rl.height();
     QTransform t;
     t.scale(unary_y, unary_y).translate(-rl.width(), 0);
-    switch(pinSide) {
-    case SideRight:
+    if (pinSide == SideRight)
         t.translate(rl.width()/2, rl.height()/2).rotate(180).translate(-rl.width()/2, -rl.height()/2);
-        break;
-    default:
-        break;
-    }
 
     label->setTransform(t);
     functionLabel = label;
 
-    if (pinInfo.functions.count() == 1)
-        color->setColor(Qt::darkYellow);
-    else
-        color->setColor(Qt::darkGreen);
-    color->setEnabled(true);
+    color->setColor(QColor(socInfo.callFunction("pinColor", pinInfo)));
+    setToolTip(socInfo.callFunction("pinTooltip", pinInfo));
 }
 
-void SMDPinItem::showPinMenu(const QPoint &screenPos)
+void SMDPinItem::showPinMenu(const QPointF &pos)
 {
-    if (pinInfo.functions.count() > 1) {
-        DialogPinConfig d(currentFunction, pinInfo);
-        d.move(screenPos);
+    QGraphicsItem *body = parentItem()->parentItem();
+    if (body->graphicsEffect())
+        return;
+
+    QGraphicsColorizeEffect *shadow = new QGraphicsColorizeEffect(this);
+    shadow->setColor(Qt::darkGreen);
+    scene()->setBackgroundBrush(QColor(Qt::darkGreen).darker());
+    body->setGraphicsEffect(shadow);
+    DialogPinConfig d(pinInfo, socInfo);
+    if (d.isConfigurable()) {
+        QGraphicsProxyWidget *w = scene()->addWidget(&d);
+        QGraphicsDropShadowEffect *shadow = new QGraphicsDropShadowEffect(w);
+        shadow->setBlurRadius(50);
+        shadow->setOffset(QPointF(0, 0));
+        shadow->setColor(Qt::black);
+        w->setGraphicsEffect(shadow);
+        w->setPos(pos);
+        w->setScale(body->scale());
         if (d.exec() == QDialog::Accepted) {
-            currentFunction = d.selectedElement();
+            pinInfo.setProperty("idx", d.idx());
             refreshFunctionLabel();
         }
     }
+    scene()->setBackgroundBrush(Qt::white);
+    body->setGraphicsEffect(0l);
 }
