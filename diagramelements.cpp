@@ -7,6 +7,7 @@
 #include <QGraphicsProxyWidget>
 #include <QSvgRenderer>
 #include <QGraphicsScene>
+#include <QGraphicsView>
 #include <QGraphicsEffect>
 #include <QGraphicsSceneEvent>
 #include <QRegion>
@@ -164,7 +165,8 @@ void SMDPinItem::showPinMenu(const QPointF &pos)
         shadow->setColor(Qt::black);
         w->setGraphicsEffect(shadow);
         w->setPos(pos);
-        w->setScale(body->scale());
+        if (scene()->views().count())
+            w->setTransform(scene()->views().at(0)->transform().inverted());
         if (d.exec() == QDialog::Accepted) {
             pinInfo.setProperty("idx", d.idx());
             refreshFunctionLabel();
