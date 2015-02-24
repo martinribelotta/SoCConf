@@ -27,6 +27,14 @@ private slots:
 
     void on_actionNew_triggered();
 
+    void on_actionZoom_In_triggered();
+
+    void on_actionZoom_Out_triggered();
+
+    void on_actionZoom_1_1_triggered();
+
+    void on_actionAbout_triggered();
+
 private:
     Ui::MainWindow *ui;
     QGraphicsView *view;

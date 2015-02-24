@@ -4,5 +4,14 @@
         <file>images/qfp-pin.svg</file>
         <file>images/document-new.png</file>
         <file>images/application-exit.png</file>
+        <file>images/zoom-in.png</file>
+        <file>images/zoom-out.png</file>
+        <file>images/zoom-original.png</file>
+        <file>images/help-about.png</file>
+        <file>images/logo.svg</file>
+        <file>images/document-open.png</file>
+        <file>images/document-save-as.png</file>
+        <file>images/document-save.png</file>
+        <file>images/run-build-install.png</file>
     </qresource>
 </RCC>

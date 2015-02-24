@@ -154,6 +154,7 @@ void SMDPinItem::showPinMenu(const QPointF &pos)
 
     QGraphicsColorizeEffect *shadow = new QGraphicsColorizeEffect(this);
     shadow->setColor(Qt::darkGreen);
+    QBrush oldBrush = scene()->backgroundBrush();
     scene()->setBackgroundBrush(QColor(Qt::darkGreen).darker());
     body->setGraphicsEffect(shadow);
     DialogPinConfig d(pinInfo, socInfo);
@@ -167,11 +168,12 @@ void SMDPinItem::showPinMenu(const QPointF &pos)
         w->setPos(pos);
         if (scene()->views().count())
             w->setTransform(scene()->views().at(0)->transform().inverted());
+        w->ensureVisible();
         if (d.exec() == QDialog::Accepted) {
             pinInfo.setProperty("idx", d.idx());
             refreshFunctionLabel();
         }
     }
-    scene()->setBackgroundBrush(Qt::white);
+    scene()->setBackgroundBrush(oldBrush);
     body->setGraphicsEffect(0l);
 }

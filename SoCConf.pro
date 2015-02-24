@@ -4,7 +4,9 @@
 #
 #-------------------------------------------------
 
-QT       += core gui svg script scripttools
+QT       += core gui svg
+
+QT += script scripttools
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -18,7 +20,8 @@ SOURCES += main.cpp \
     diagramelements.cpp \
     sceneview.cpp \
     dialogpinconfig.cpp \
-    socinfo.cpp
+    socinfo.cpp \
+    aboutdialog.cpp
 
 HEADERS  += \
     mainwindow.h \
@@ -26,14 +29,17 @@ HEADERS  += \
     diagramelements.h \
     sceneview.h \
     dialogpinconfig.h \
-    socinfo.h
+    socinfo.h \
+    aboutdialog.h
 
 FORMS    += \
-    mainwindow.ui
+    mainwindow.ui \
+    aboutdialog.ui
 
 RESOURCES += \
     resources.qrc
 
 DISTFILES += \
     examples/lpc4337fbd144.chip \
-    examples/rz-a1l.chip
+    examples/rz-a1l.chip \
+    examples/stm32f407Zx.chip

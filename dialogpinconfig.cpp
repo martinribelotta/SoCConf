@@ -1,6 +1,10 @@
 #include "dialogpinconfig.h"
 #include "diagramelements.h"
 
+#include <QLabel>
+#include <QPainter>
+#include <QPushButton>
+#include <QFormLayout>
 #include <QGroupBox>
 #include <QDialogButtonBox>
 #include <QBoxLayout>
@@ -58,24 +62,23 @@ public:
 class ComboView: public EntryView {
 private:
     QComboBox *view;
-    QGroupBox *group;
+    QLabel *label;
 public:
     ComboView(QWidget *parent = 0l): EntryView(parent) {
-        QHBoxLayout *layout = new QHBoxLayout(this);
-        layout->setMargin(0);
-        group = new QGroupBox(this);
-        layout->addWidget(group);
-        QHBoxLayout *innerLayout = new QHBoxLayout(group);
-        view = new QComboBox(group);
+        QFormLayout *layout = new QFormLayout(this);
+        label = new QLabel(this);
+        view = new QComboBox(this);
         view->setEditable(false);
-        innerLayout->addWidget(view);
+        view->setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred));
+        layout->addRow(label, view);
+        layout->setFieldGrowthPolicy(QFormLayout::ExpandingFieldsGrow);
     }
 
     virtual void setData(const QString& valName, const QScriptValue& val, const QScriptValue& idx) {
         int selectedItem = idx.property(valName).toInteger();
         QSortFilterProxyModel *p = new QSortFilterProxyModel(this);
         QStringListModel *m = new QStringListModel(val.toVariant().toStringList());
-        group->setTitle(valName);
+        label->setText(valName);
         p->setSourceModel(m);
         p->setFilterRegExp(QRegExp("^((?!None).)*$"));
         view->setModel(p);
@@ -89,13 +92,29 @@ public:
     }
 };
 
+class BoxCheckBox: public QCheckBox {
+public:
+    BoxCheckBox(QWidget *parent = 0l): QCheckBox(parent) {}
+
+protected:
+    virtual void paintEvent(QPaintEvent *e) {
+        QCheckBox::paintEvent(e);
+        QPainter p(this);
+        p.setPen(Qt::red);
+        p.drawRect(QRect(QPoint(), size()));
+    }
+};
+
 class CheckBox: public EntryView {
-    QCheckBox *check;
+    QPushButton *check;
 public:
     CheckBox(QWidget *parent = 0l): EntryView(parent) {
-        QHBoxLayout *l = new QHBoxLayout(this);
-        check = new QCheckBox(this);
+        QVBoxLayout *l = new QVBoxLayout(this);
+        check = new QPushButton(this);
+        check->setCheckable(true);
         l->addWidget(check);
+        setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred));
+        check->setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred));
     }
 
     virtual void setData(const QString& valName, const QScriptValue& val, const QScriptValue& idx) {
@@ -147,6 +166,7 @@ DialogPinConfig::DialogPinConfig(QScriptValue pinInfo, const SoCInfo &socInfo, Q
             if (e) {
                 e->setData(name, val, pIdx);
                 e->setProperty("configName", name);
+                e->setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred));
                 layout->addWidget(e);
                 views.append(e);
             }
